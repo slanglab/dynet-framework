@@ -58,6 +58,10 @@ if __name__ == '__main__':
             help='Learning rate decay per epoch.')
     parser.add_argument('--clip', type=float, default=5.0, 
             help='Gradient clipping threshold.')
+    parser.add_argument('--patience', type=int, default=3, 
+            help='Epochs to half learning rate if no improvement.')
+    parser.add_argument('--monitor', type=str, default='train_loss', 
+            help='Quantity to monitor for learning rate halving.')
 
     parser.add_argument('--cutoff', type=int, default=1048,
             help='Cutoff N longest training examples (default for ptb).')
@@ -101,7 +105,7 @@ if __name__ == '__main__':
 
     print('Checkpointing models on validation accuracy...')
     highest_val_accuracy = 0.
-    last_train_loss = 0.
+    monitor = 0.
 
     print('Building model...')
     collection = dy.ParameterCollection()
@@ -129,7 +133,7 @@ if __name__ == '__main__':
 
     patience = 1
     total_seqs = sum([ len(X_batch) for X_batch in X_train ])
-    for epoch in range(1, EPOCHS+1):
+    for epoch in range(1, args.epochs+1):
         seqs, loss = 0, 0.
         start = time.time()
 
@@ -172,19 +176,28 @@ if __name__ == '__main__':
             highest_val_accuracy = accuracy
             collection.save(checkpoint)
 
-        #patience for learning rate halving - adam
-        if last_train_loss == 0 or loss < last_train_loss:
-            print('Training loss improved.')
-            lowest_train_loss = loss
+        if args.monitor == 'train_loss':
+            quantity = loss
+        elif args.monitor == 'dev_loss':
+            quantity = val_loss
+        elif args.monitor == 'accuracy':
+            quantity = accuracy
         else:
-            if patience >= PATIENCE:
+            print('Not implemented.')
+            quantity = 0
+
+        #patience for learning rate halving - adam
+        if monitor == 0 or quantity < monitor:
+            print('Monitored quantity improved.')
+        else:
+            if patience >= args.patience:
                 print('No improvement. Halving learning rate.')
                 trainer.learning_rate *= 0.5
                 patience = 1
             else:
                 print('Patience at %d' % patience)
                 patience += 1
-        last_train_loss = loss
+        monitor = quantity
 
         #TODO log training losses and validations losses
         #should also consider implementing validating with f1
