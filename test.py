@@ -1,7 +1,31 @@
-import os
 import random
+import os
+from subprocess import call
 
 import utils
+
+def evalb(y_pred, y_gold, run='/runs/baseline', params='eval/params/', \
+        postprocess=simple_linerization, cutoff=True):
+    #strip masking and <EOS>
+    strip = lambda x: x
+    y_pred = [ strip(y) for y, in y_pred ]
+    y_gold = [ strip(y) for y, in y_gold ]
+
+    #apply postprocessing steps
+    y_pred = [ postprocess(y) for y, in y_pred ]
+    y_gold = [ postprocess(y) for y, in y_gold ]
+
+    #write
+
+    #evalb
+
+    #extract from report
+    f1 = 0
+
+    return f1
+
+def simple_linearization(s):
+    return s
 
 def validate(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_valid_raw, \
         dy, seq2seq, out_vocab, run='/runs/baseline', valid_fn='validation'):
@@ -31,33 +55,65 @@ def validate(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_vali
             total_toks += len(count)
     seq_accuracy = correct_val_seqs/total_val_seqs
     tok_accuracy = correct_toks/total_toks
-
     validation.close()
 
-    return val_loss, seq_accuracy, tok_accuracy
+    f1, precision, recall = evalb(y, y_)
+    return val_loss, f1, seq_accuracy, tok_accuracy
 
 #tests on section wsj_23
 #TODO implement argparse
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='General seq2seq framework (testing) for \
+            ptb parsing written in Dynet by Johnny Wei - jwei@umass.edu')
+    parser.add_argument('--test', type=str, default='data/wsj_23', 
+            help='Test set.')
+    parser.add_argument('--validation', type=str, default='validation', 
+            help='Name of results.')
+    parser.add_argument('--populate', type=str, required=True,
+            help='Load a pretrained model.')
+    parser.add_argument('--in_vocab', type=str, default='data/in_vocab', 
+            help='Input vocabulary.')
+    parser.add_argument('--out_vocab', type=str, default='data/out_vocab', 
+            help='Ouput vocabulary.')
+
+    parser.add_argument('--mem', type=int, default=22528,
+            help='Memory to allocate (default=22GB).')
+    parser.add_argument('--dy_seed', type=int, default=0,
+            help='Random seed for dynet.')
+    parser.add_argument('--gpus', type=int, default=1,
+            help='GPUs to allocate to dynet.')
+    parser.add_argument('--autobatch', type=bool, default=False,
+            help='Autobatching for dynet')
+
+    parser.add_argument('--seed', type=int, default=0,
+            help='Seed for python random.')
+    parser.add_argument('--imports', type=str, default='seq2seq',
+            help='File to look for model classes in (import seq2seq).')
+    parser.add_argument('--cutoff', type=int, default=1048,
+            help='Cutoff N longest training examples (default for ptb).')
+    parser.add_argument('--batch_size', type=int, default=128, 
+            help='Testing batch size.')
+    args = parser.parse_args()
+
     import _dynet as dy
+    random.seed(args.seed)
     dy_params = dy.DynetParams()
-    dy_params.set_random_seed(random.randint(0, 1000))
-    dy_params.set_autobatch(True)
-    dy_params.set_requested_gpus(1)
-    dy_params.set_mem(20480)
+    dy_params.set_random_seed(args.dy_seed)
+    dy_params.set_autobatch(args.autobatch)
+    dy_params.set_requested_gpus(args.gpus)
+    dy_params.set_mem(args.mem)
     dy_params.init()
 
-    RUN = 'runs/att_baseline'
-
     print('Reading vocab...')
-    in_vocab, out_vocab = utils.load_vocab()
+    in_vocab, out_vocab = utils.load_vocab(args.in_vocab, args.out_vocab)
+    eos = out_vocab.index('<EOS>')
     print('Done.')
 
     print('Reading test data...')
     VALID_BATCH_SIZE=32
     X_valid, y_valid, X_valid_masks, y_valid_masks = \
-            utils.load(in_vocab, out_vocab, section='wsj_24', batch_size=VALID_BATCH_SIZE)
-    X_valid_raw, y_valid_raw = utils.load_raw(section='wsj_24', batch_size=VALID_BATCH_SIZE)
+            utils.load(in_vocab, out_vocab, section=args.test, batch_size=args.batch_size)
+    X_valid_raw, y_valid_raw = utils.load_raw(section=args.test, batch_size=args.batch_size)
     print('Done.')
 
     print('Building model...')
@@ -65,7 +121,7 @@ if __name__ == '__main__':
     seq2seq = Seq2SeqAttention(collection, len(in_vocab), len(out_vocab))
     print('Done.')
 
-    checkpoint = os.path.join(RUN, 'baseline.model')
+    checkpoint = args.populate
     print('Loading model from %s.' % checkpoint)
 
     print('Loading model...')
