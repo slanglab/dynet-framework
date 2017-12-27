@@ -12,8 +12,8 @@ import numpy as np
 import utils, test
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='General seq2seq framework for \
-            ptb parsing written in Dynet by Johnny Wei - jwei@umass.edu')
+    parser = argparse.ArgumentParser(description='General seq2seq and language \
+            modelling framework for Dynet written by Johnny Wei - jwei@umass.edu')
 
     parser.add_argument('--run', type=str, default='runs/experiment', 
             help='Experiment directory.')
@@ -29,6 +29,17 @@ if __name__ == '__main__':
             help='Input vocabulary.')
     parser.add_argument('--out_vocab', type=str, default='data/out_vocab', 
             help='Ouput vocabulary.')
+
+    parser.add_argument('--format', type=str, default='parse',
+            help='Format of input data.')
+    parser.add_argument('--val_metric', type=str, default='evalb',
+            help='Metric to use for validation.')
+    parser.add_argument('--cutoff', type=int, default=1048,
+            help='Cutoff N longest training examples (default for ptb).')
+    parser.add_argument('--batch_size', type=int, default=128, 
+            help='Training batch size.')
+    parser.add_argument('--val_batch_size', type=int, default=32, 
+            help='Validation batch size.')
 
     parser.add_argument('--mem', type=int, default=22528,
             help='Memory to allocate (default=22GB).')
@@ -62,13 +73,6 @@ if __name__ == '__main__':
             help='Epochs to half learning rate if no improvement.')
     parser.add_argument('--monitor', type=str, default='train_loss', 
             help='Quantity to monitor for learning rate halving.')
-
-    parser.add_argument('--cutoff', type=int, default=1048,
-            help='Cutoff N longest training examples (default for ptb).')
-    parser.add_argument('--batch_size', type=int, default=128, 
-            help='Training batch size.')
-    parser.add_argument('--val_batch_size', type=int, default=32, 
-            help='Validation batch size.')
     args = parser.parse_args()
 
     random.seed(args.seed)
@@ -87,12 +91,15 @@ if __name__ == '__main__':
     print('Reading train/valid data...')
     X_train, y_train, X_train_masks, y_train_masks = utils.load( \
             in_vocab, out_vocab, section=args.train, 
-            batch_size=args.batch_size, cutoff=args.cutoff)
+            batch_size=args.batch_size, imports=args.imports,
+            format=args.format, cutoff=args.cutoff)
 
     X_valid_raw, y_valid_raw = utils.load_raw( \
-            section=args.dev, batch_size=args.val_batch_size)
+            section=args.dev, batch_size=args.val_batch_size,
+            imports=args.imports, format=args.format)
     X_valid, y_valid, X_valid_masks, y_valid_masks = utils.load( \
-            in_vocab, out_vocab, section=args.dev, batch_size=args.val_batch_size)
+            in_vocab, out_vocab, section=args.dev, batch_size=args.val_batch_size,
+            imports=args.imports, format=args.format)
     print('Done.')
 
     print('Contains %d unique words.' % len(in_vocab))
@@ -180,8 +187,8 @@ if __name__ == '__main__':
             quantity = loss
         elif args.monitor == 'dev_loss':
             quantity = val_loss
-        elif args.monitor == 'accuracy':
-            quantity = accuracy
+        elif args.monitor == 'none':
+            quantity += 1
         else:
             print('Not implemented.')
             quantity = 0
