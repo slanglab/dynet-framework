@@ -3,11 +3,6 @@ import _dynet as dy
 
 class LanguageModelBase:
     def to_sequence_batch(self, decoding, out_vocab):
-        batch_size = decoding[0].dim()[1]
-        decoding = [ dy.softmax(x) for x in decoding ]
-        decoding = [ dy.reshape(x, (len(out_vocab), batch_size), batch_size=1) for x in decoding ]
-        decoding = [ np.argmax(x.value(), axis=0) for x in decoding ]
-        decoding = [  [ x[i] for x in decoding ] for i in range(0, batch_size) ]
         return [ [ out_vocab[y] for y in x ] for x in decoding ]
 
     def one_batch(self, X_batch, y_batch, X_masks, y_masks, eos=133, training=True):
@@ -19,19 +14,17 @@ class LanguageModelBase:
 
         if training:
             decoding = self.backward_batch(X_batch, y_batch, X_masks)
-
-            batch_loss = []
-            for x, y, mask in zip(decoding, y_batch, y_masks):
-                mask_expr = dy.inputVector(mask)
-                mask = dy.reshape(mask_expr, (1,), batch_size)
-                batch_loss.append(mask * dy.pickneglogsoftmax_batch(x, y))
-            batch_loss = dy.esum(batch_loss)
-            batch_loss = dy.sum_batches(batch_loss)
-
         else:
             decoding = self.forward_batch(X_batch, len(y_batch), X_masks, eos)
 
-        #needs to be averaged...
+        batch_loss = []
+        for x, y, mask in zip(decoding, y_batch, y_masks):
+            mask_expr = dy.inputVector(mask)
+            mask = dy.reshape(mask_expr, (1,), batch_size)
+            batch_loss.append(mask * dy.pickneglogsoftmax_batch(x, y))
+        batch_loss = dy.esum(batch_loss)
+        batch_loss = dy.sum_batches(batch_loss)
+
         return batch_loss, decoding
 
 class LSTMLanguageModel(LanguageModelBase):
@@ -80,9 +73,26 @@ class LSTMLanguageModel(LanguageModelBase):
 
     def sample_batch(self, batch_size, maxlen, eos):
         W_emb, R, b = self.get_params()
-        X = dy.lookup_batch(W_emb, [ eos for i in xrange(0, batch_size) ])
-
         self.lstm.set_dropouts(0, 0)
         s0 = self.lstm.initial_state()
+        
+        eoses = dy.lookup_batch(W_emb, [ eos for i in xrange(0, batch_size) ])
+        state = s0.add_input(eoses)
+
+        samples = []
+        decoding = []
+        for i in range(0, maxlen):
+            #probability dist
+            h_i = state.h()[-1]
+            decoding.append(dy.affine_transform([b, R, h_i]))
+
+            #beam size 1
+            probs = dy.softmax(decoding[-1])
+            dim = probs.dim()
+            flatten = dy.reshape(probs, (dim[0][0], dim[1]), batch_size=1)
+            beam = np.argmax(flatten.value(), axis=0)
+            state = state.add_input(dy.lookup_batch(Wout_emb, beam))
+
+            samples.append(beam)
 
         return samples

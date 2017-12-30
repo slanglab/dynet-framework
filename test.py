@@ -1,39 +1,26 @@
 import random
 import os
 from subprocess import call
+import numpy as np
 
 import utils
 
-def evalb(y_pred, y_gold, run='/runs/baseline', params='eval/params/', \
-        postprocess=simple_linerization, cutoff=True):
-    #strip masking and <EOS>
-    strip = lambda x: x
-    y_pred = [ strip(y) for y, in y_pred ]
-    y_gold = [ strip(y) for y, in y_gold ]
+def get_val_metric(val_metric, imports):
+    if val_metric in [ 'perplexity', 'accuracy' ]:
+        imports = __import__('test')
+        validation = getattr(imports, val_metric)
+    else:
+        imports = __import__(imports)
+        validation = getattr(imports, val_metric)
+    return validation
 
-    #apply postprocessing steps
-    y_pred = [ postprocess(y) for y, in y_pred ]
-    y_gold = [ postprocess(y) for y, in y_gold ]
-
-    #write
-
-    #evalb
-
-    #extract from report
-    f1 = 0
-
-    return f1
-
-def simple_linearization(s):
-    return s
-
-def validate(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_valid_raw, \
+def accuracy(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_valid_raw, \
         dy, seq2seq, out_vocab, run='/runs/baseline', valid_fn='validation'):
     val_loss = 0.
     correct_toks = 0.
     total_toks = 0.
-    correct_val_seqs = 0.
-    total_val_seqs = 0.
+    correct_seqs = 0.
+    total_seqs = 0.
 
     validation = open(os.path.join(run, valid_fn), 'wt')
     for X_batch, y_batch, X_masks, y_masks, X_batch_raw, y_batch_raw in \
@@ -47,21 +34,45 @@ def validate(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_vali
         for X_raw, y_, y in zip(X_batch_raw, y_batch_raw, y_pred):
             validation.write('%s\t%s\t%s\n' % \
                     (' '.join(X_raw), ' '.join(y_), ' '.join(y)))
-            correct_val_seqs += 1 if all([ tok_ == tok or tok_ == '<mask>' \
+            correct_seqs += 1 if all([ tok_ == tok or tok_ == '<mask>' \
                     for tok_, tok in zip(y_, y) ]) else 0
-            total_val_seqs += 1
+            total_seqs += 1
             count = [ tok_ == tok for tok_, tok in zip(y_, y) if tok_ != '<mask>' ]
             correct_toks += count.count(True)
             total_toks += len(count)
-    seq_accuracy = correct_val_seqs/total_val_seqs
+    seq_accuracy = correct_seqs/total_seqs
     tok_accuracy = correct_toks/total_toks
     validation.close()
 
-    f1, precision, recall = evalb(y, y_)
-    return val_loss, f1, seq_accuracy, tok_accuracy
+    metrics = [ ('Token-level accuracy: %f', tok_accuracy), \
+            ('Sequence-level accuracy: %f', seq_accuracy) ]
 
-#tests on section wsj_23
-#TODO implement argparse
+    return val_loss, seq_accuracy, metrics
+
+def perplexity(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_valid_raw, \
+        dy, lm, out_vocab, run='/runs/baseline', valid_fn='validation'):
+    val_loss = 0.
+    l = 0.
+
+    for X_batch, y_batch, X_masks, y_masks, X_batch_raw, y_batch_raw in \
+            zip(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_valid_raw):
+        dy.renew_cg()
+        batch_loss, decoding = lm.one_batch( \
+                X_batch, y_batch, X_masks, y_masks, training=False)
+        val_loss += batch_loss.value()
+
+        neg_ln_prob = batch_loss.value()
+        M = sum([ sum(row) for row in X_masks ])
+        l += (1./M) * (neg_ln_prob / np.log(2))
+    perplexity = np.power(2, l)
+
+    #validate some samples from lm
+    validation = open(os.path.join(run, valid_fn), 'wt')
+    validation.close()
+
+    metrics = [ ('Perplexity: %f', perplexity) ]
+    return val_loss, -perplexity, metrics
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='General seq2seq framework (testing) for \
             ptb parsing written in Dynet by Johnny Wei - jwei@umass.edu')

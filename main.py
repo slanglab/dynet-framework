@@ -111,7 +111,10 @@ if __name__ == '__main__':
     print(', '.join(out_vocab[:10]))
 
     print('Checkpointing models on validation accuracy...')
+    validate = test.get_val_metric(args.val_metric, args.imports)
     highest_val_accuracy = 0.
+
+    print('Halving learning rate on metric with patience.')
     monitor = 0.
 
     print('Building model...')
@@ -170,7 +173,7 @@ if __name__ == '__main__':
         trainer.learning_rate *= args.lr_decay
 
         print('Validating...')
-        val_loss, accuracy, tok_accuracy = test.validate( \
+        val_loss, accuracy, tok_accuracy = validate( \
                 X_valid, y_valid, X_valid_masks, y_valid_masks, \
                 X_valid_raw, y_valid_raw, dy, seq2seq, out_vocab, \
                 run=args.run, valid_fn=args.validation)
@@ -187,6 +190,8 @@ if __name__ == '__main__':
             quantity = loss
         elif args.monitor == 'dev_loss':
             quantity = val_loss
+        elif args.monitor == 'val_metric':
+            quantity = accuracy
         elif args.monitor == 'none':
             quantity += 1
         else:
