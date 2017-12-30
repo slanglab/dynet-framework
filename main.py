@@ -173,12 +173,12 @@ if __name__ == '__main__':
         trainer.learning_rate *= args.lr_decay
 
         print('Validating...')
-        val_loss, accuracy, tok_accuracy = validate( \
+        val_loss, accuracy, metrics = validate( \
                 X_valid, y_valid, X_valid_masks, y_valid_masks, \
                 X_valid_raw, y_valid_raw, dy, seq2seq, out_vocab, \
                 run=args.run, valid_fn=args.validation)
-        print('Done. Sequence-level accuracy: %f. Token-level accuracy: %f' % \
-                (accuracy, tok_accuracy))
+        print('Done. ' + ' '.join([ i[0] for i in metrics ])  % \
+                metrics[0][1] if len(metrics) == 1 else [ i[1] for i in metrics ])
 
         #checkpointing
         if highest_val_accuracy == 0. or accuracy > highest_val_accuracy:

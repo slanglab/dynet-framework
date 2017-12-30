@@ -44,8 +44,8 @@ def accuracy(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_vali
     tok_accuracy = correct_toks/total_toks
     validation.close()
 
-    metrics = [ ('Token-level accuracy: %f', tok_accuracy), \
-            ('Sequence-level accuracy: %f', seq_accuracy) ]
+    metrics = [ ('Token-level accuracy: %f.', tok_accuracy), \
+            ('Sequence-level accuracy: %f.', seq_accuracy) ]
 
     return val_loss, seq_accuracy, metrics
 
@@ -64,13 +64,14 @@ def perplexity(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_va
         neg_ln_prob = batch_loss.value()
         M = sum([ sum(row) for row in X_masks ])
         l += (1./M) * (neg_ln_prob / np.log(2))
+        break
     perplexity = np.power(2, l)
 
     #validate some samples from lm
     validation = open(os.path.join(run, valid_fn), 'wt')
     validation.close()
 
-    metrics = [ ('Perplexity: %f', perplexity) ]
+    metrics = [ ('Perplexity: %f.', perplexity) ]
     return val_loss, -perplexity, metrics
 
 if __name__ == '__main__':
