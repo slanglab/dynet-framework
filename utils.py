@@ -24,7 +24,8 @@ def read_vocab(vocab='vocab', directory='data/'):
         vocab = [ i.strip().split('\t')[0] for i in fh ]
     return vocab
 
-def load_vocab(in_fn, out_fn, in_toks=['<unk>', '<EOS>', '<mask>'], out_toks=['<EOS>', '<mask>']):
+def load_vocab(in_fn, out_fn, in_toks=['<EOS>', '<unk>', '<mask>'], \
+        out_toks=['<EOS>', '<unk>', '<mask>']):
     in_vocab = read_vocab(vocab=in_fn)
     out_vocab = read_vocab(vocab=out_fn)
     in_vocab += in_toks
@@ -53,7 +54,7 @@ def batch(X, batch_size, mask=0., masking='post'):
         X_padding = [ X_len - len(x) for x in X_ ]
 
         if masking == 'post':
-            X_padded = [ x + [mask] * mask_len for x, mask_len  in zip(X_, X_padding) ]
+            X_padded = [ x + ([mask] * mask_len) for x, mask_len  in zip(X_, X_padding) ]
             X_mask = [ [1]*len(x)  + [0]*mask_len for x, mask_len  in zip(X_, X_padding) ]
         elif masking == 'pre':
             X_padded = [ ([mask] * mask_len) + x for x, mask_len  in zip(X_, X_padding) ]
@@ -90,6 +91,6 @@ def load(in_vocab, out_vocab, section='wsj_2-21', batch_size=128, imports='seq2s
     X_train, y_train = X_train[cutoff:], y_train[cutoff:]             #cutoff longest examples
     X_train_seq, word_to_n, n_to_word = text_to_sequence(X_train, in_vocab)
     y_train_seq, _, _ = text_to_sequence(y_train, out_vocab)
-    X_train_seq, X_train_masks = batch(X_train_seq, batch_size=batch_size, mask=len(in_vocab)-1, masking='pre')
+    X_train_seq, X_train_masks = batch(X_train_seq, batch_size=batch_size, mask=len(in_vocab)-1, masking='post')
     y_train_seq, y_train_masks = batch(y_train_seq, batch_size=batch_size, mask=len(out_vocab)-1, masking='post')
     return X_train_seq, y_train_seq, X_train_masks, y_train_masks

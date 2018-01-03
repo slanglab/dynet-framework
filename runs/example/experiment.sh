@@ -1,18 +1,23 @@
-ROOT=/home/johntzwei/Documents/vanilla-seq2seq
+ROOT=/home/jwei/seq2seq-parse
 
 python $ROOT/main.py \
     --run runs/example/ \
-    --model LSTMLanguageModel \
+    --model Seq2SeqVanilla \
     --train data/lm/train \
     --dev data/lm/valid \
     --in_vocab data/lm/vocab \
     --out_vocab data/lm/vocab \
     --format lm \
     --val_metric perplexity \
-    --cutoff 39800 \
-    --mem 256 \
-    --gpus 0 \
-    --imports lm \
+    --cutoff 0 \
+    --mem 22528 \
+    --gpus 1 \
+    --imports seq2seq \
     --checkpoint lm.model \
-    --batch_size 16 \
-    --val_batch_size 16
+    --epochs 600 \
+    --trainer sgd \
+    --lr 1 \
+    --lr_decay 0.5 \
+    --monitor train_loss \
+    --batch_size 64 \
+    --val_batch_size 64

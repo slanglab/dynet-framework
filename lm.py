@@ -3,7 +3,10 @@ import _dynet as dy
 
 class LanguageModelBase:
     def to_sequence_batch(self, decoding, out_vocab):
-        return [ [ out_vocab[y] for y in x ] for x in decoding ]
+        batch_size = len(decoding[0])
+        decoding = [  [ x[i] for x in decoding ] for i in range(0, batch_size) ]
+        decoding = [ [ out_vocab[y] for y in x ] for x in decoding ]
+        return decoding
 
     def one_batch(self, X_batch, y_batch, X_masks, y_masks, eos=133, training=True):
         batch_size = len(X_batch)
@@ -28,8 +31,8 @@ class LanguageModelBase:
         return batch_loss, decoding
 
 class LSTMLanguageModel(LanguageModelBase):
-    def __init__(self, collection, vocab_size, out_vocab_size, input_embedding_dim=256, output_embedding_dim=128, \
-            lstm_layers=4, lstm_hidden_dim=256, input_dropout=0.3, recurrent_dropout=0.3):
+    def __init__(self, collection, vocab_size, out_vocab_size, input_embedding_dim=128, \
+            lstm_layers=2, lstm_hidden_dim=256, input_dropout=0.3, recurrent_dropout=0.3):
         self.collection = collection
         self.params = {}
 
@@ -86,13 +89,17 @@ class LSTMLanguageModel(LanguageModelBase):
             h_i = state.h()[-1]
             decoding.append(dy.affine_transform([b, R, h_i]))
 
-            #beam size 1
             probs = dy.softmax(decoding[-1])
             dim = probs.dim()
             flatten = dy.reshape(probs, (dim[0][0], dim[1]), batch_size=1)
-            beam = np.argmax(flatten.value(), axis=0)
-            state = state.add_input(dy.lookup_batch(Wout_emb, beam))
+            
+            beam = []
+            cdfs = np.cumsum(flatten.value().transpose(), axis=0)
+            for cdf in cdfs:
+                choice = sum(cdf < np.random.rand()) - 1
+                beam.append(choice)
 
+            state = state.add_input(dy.lookup_batch(W_emb, beam))
             samples.append(beam)
 
         return samples

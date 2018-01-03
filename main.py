@@ -143,15 +143,16 @@ if __name__ == '__main__':
 
     patience = 1
     total_seqs = sum([ len(X_batch) for X_batch in X_train ])
+    Ms = [ sum([ sum(seq) for seq in batch ]) for batch in X_train_masks ]
     for epoch in range(1, args.epochs+1):
         seqs, loss = 0, 0.
         start = time.time()
 
-        for i, (X_batch, y_batch, X_masks, y_masks) in \
-                enumerate(zip(X_train, y_train, X_train_masks, y_train_masks), 1):
+        for i, (X_batch, y_batch, X_masks, y_masks, M) in \
+                enumerate(zip(X_train, y_train, X_train_masks, y_train_masks, Ms), 1):
             dy.renew_cg()
             batch_loss, _ = seq2seq.one_batch(X_batch, y_batch, X_masks, y_masks, eos=eos)
-            normalized_batch_loss = batch_loss / (len(X_batch) * len(X_batch[0])) #normalize batch loss by timesteps
+            normalized_batch_loss = batch_loss / M      #normalize batch loss by timesteps
 
             normalized_batch_loss.backward()
             trainer.update()

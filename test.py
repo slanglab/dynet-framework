@@ -54,6 +54,7 @@ def perplexity(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_va
     val_loss = 0.
     l = 0.
 
+    validation = open(os.path.join(run, valid_fn), 'wt')
     for X_batch, y_batch, X_masks, y_masks, X_batch_raw, y_batch_raw in \
             zip(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_valid_raw):
         dy.renew_cg()
@@ -64,12 +65,18 @@ def perplexity(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_va
         neg_ln_prob = batch_loss.value()
         M = sum([ sum(row) for row in X_masks ])
         l += (1./M) * (neg_ln_prob / np.log(2))
-        break
+
+        #for x, y in zip(X_batch_raw, y_batch_raw):
+        #    validation.write('%s\t%s\n' % \
+        #            (' '.join(x), ' '.join(y)))
     perplexity = np.power(2, l)
 
     #validate some samples from lm
-    validation = open(os.path.join(run, valid_fn), 'wt')
-    validation.close()
+    #samples = lm.sample_batch(32, 20, X_batch[0][0])
+    #samples = lm.to_sequence_batch(samples, out_vocab)
+    #for sample in samples:
+    #    validation.write('%s\n' % ' '.join(sample))
+    #validation.close()
 
     metrics = [ ('Perplexity: %f.', perplexity) ]
     return val_loss, -perplexity, metrics
