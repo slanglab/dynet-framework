@@ -24,8 +24,8 @@ def read_vocab(vocab='vocab', directory='data/'):
         vocab = [ i.strip().split('\t')[0] for i in fh ]
     return vocab
 
-def load_vocab(in_fn, out_fn, in_toks=['<EOS>', '<unk>', '<mask>'], \
-        out_toks=['<EOS>', '<unk>', '<mask>']):
+def load_vocab(in_fn, out_fn, in_toks=['<EOS>', '<mask>'], \
+        out_toks=['<EOS>', '<mask>']):
     in_vocab = read_vocab(vocab=in_fn)
     out_vocab = read_vocab(vocab=out_fn)
     in_vocab += in_toks
