@@ -63,12 +63,13 @@ def perplexity(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_va
         val_loss += batch_loss.value()
 
         neg_ln_prob = batch_loss.value()
-        M = sum([ sum(row) for row in X_masks ])
-        l += (1./M) * (neg_ln_prob / np.log(2))
+        l += neg_ln_prob
 
         #for x, y in zip(X_batch_raw, y_batch_raw):
         #    validation.write('%s\t%s\n' % \
         #            (' '.join(x), ' '.join(y)))
+    M = sum([ sum([ sum(seq) for seq in batch ]) for batch in X_valid_masks ])
+    l = (1./M) * (l / np.log(2))
     perplexity = np.power(2, l)
 
     #validate some samples from lm
