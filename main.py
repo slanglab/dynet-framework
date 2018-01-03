@@ -115,7 +115,7 @@ if __name__ == '__main__':
     highest_val_accuracy = 0.
 
     print('Halving learning rate on metric with patience.')
-    monitor = 0.
+    monitor = float('-infinity')
 
     print('Building model...')
     collection = dy.ParameterCollection()
@@ -192,7 +192,7 @@ if __name__ == '__main__':
         elif args.monitor == 'dev_loss':
             quantity = val_loss
         elif args.monitor == 'val_metric':
-            quantity = accuracy
+            quantity = -accuracy
         elif args.monitor == 'none':
             quantity += 1
         else:
@@ -200,7 +200,7 @@ if __name__ == '__main__':
             quantity = 0
 
         #patience for learning rate halving - adam
-        if monitor == 0 or quantity < monitor:
+        if quantity < monitor:
             print('Monitored quantity improved.')
         else:
             if patience >= args.patience:
