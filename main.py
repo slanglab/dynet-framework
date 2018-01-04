@@ -112,9 +112,9 @@ if __name__ == '__main__':
 
     print('Checkpointing models on validation accuracy...')
     validate = test.get_val_metric(args.val_metric, args.imports)
-    highest_val_accuracy = 0.
+    highest_val_accuracy = float('-infinity')
 
-    print('Halving learning rate on metric with patience.')
+    print('Halving learning rate on metric (%s) with patience.' % args.val_metric)
     monitor = float('-infinity')
 
     print('Building model...')
@@ -182,25 +182,25 @@ if __name__ == '__main__':
                 metrics[0][1] if len(metrics) == 1 else [ i[1] for i in metrics ])
 
         #checkpointing
-        if highest_val_accuracy == 0. or accuracy > highest_val_accuracy:
+        if accuracy > highest_val_accuracy:
             print('Highest accuracy yet. Saving model...')
             highest_val_accuracy = accuracy
             collection.save(checkpoint)
 
         if args.monitor == 'train_loss':
-            quantity = loss
+            quantity = -loss
         elif args.monitor == 'dev_loss':
-            quantity = val_loss
+            quantity = -val_loss
         elif args.monitor == 'val_metric':
-            quantity = -accuracy
+            quantity = accuracy
         elif args.monitor == 'none':
-            quantity += 1
+            quantity = 0 if monitor < 0 else monitor + 1
         else:
             print('Not implemented.')
             quantity = 0
 
         #patience for learning rate halving - adam
-        if quantity < monitor:
+        if monitor < quantity:
             print('Monitored quantity improved.')
         else:
             if patience >= args.patience:
