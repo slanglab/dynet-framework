@@ -2,7 +2,7 @@ ROOT=/home/jwei/seq2seq-parse
 
 python $ROOT/main.py \
     --run runs/example/ \
-    --model Seq2SeqVanilla \
+    --model LSTMLanguageModel \
     --train data/lm/train \
     --dev data/lm/valid \
     --in_vocab data/lm/vocab \
@@ -10,14 +10,15 @@ python $ROOT/main.py \
     --format lm \
     --val_metric perplexity \
     --cutoff 0 \
-    --mem 22528 \
+    --mem 11264 \
     --gpus 1 \
-    --imports seq2seq \
+    --imports lm \
     --checkpoint lm.model \
-    --epochs 600 \
+    --epochs 300 \
     --trainer sgd \
     --lr 1 \
-    --lr_decay 0.5 \
-    --monitor train_loss \
+    --lr_decay 0.93 \
+    --patience 3 \
+    --monitor none \
     --batch_size 64 \
     --val_batch_size 64
