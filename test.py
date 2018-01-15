@@ -50,7 +50,7 @@ def accuracy(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_vali
     return val_loss, seq_accuracy, metrics
 
 def perplexity(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_valid_raw, \
-        dy, lm, out_vocab, run='/runs/baseline', valid_fn='validation'):
+        dy, lm, out_vocab, validate_samples=True, run='/runs/baseline', valid_fn='validation'):
     val_loss = 0.
     l = 0.
 
@@ -73,11 +73,15 @@ def perplexity(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_va
     perplexity = np.power(2, l)
 
     #validate some samples from lm
-    #samples = lm.sample_batch(32, 20, X_batch[0][0])
-    #samples = lm.to_sequence_batch(samples, out_vocab)
-    #for sample in samples:
-    #    validation.write('%s\n' % ' '.join(sample))
-    #validation.close()
+    if validate_samples:
+        samples = []
+        for i in range(0, 32):
+            sample = lm.sample_one(20, X_batch[0][0])
+            samples.append(lm.to_sequence(sample, out_vocab))
+
+        for sample in samples:
+            validation.write('%s\n' % ' '.join(sample))
+        validation.close()
 
     metrics = [ ('Perplexity: %f.', perplexity) ]
     return val_loss, -perplexity, metrics
