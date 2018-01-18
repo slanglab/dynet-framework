@@ -148,8 +148,14 @@ if __name__ == '__main__':
         seqs, toks, loss = 0, 0, 0.
         start = time.time()
 
-        for i, (X_batch, y_batch, X_masks, y_masks, M) in \
-                enumerate(zip(X_train, y_train, X_train_masks, y_train_masks, Ms), 1):
+        #length sorted batches, train batches in random order
+        indexes = range(0, len(X_batch))
+        random.shuffle(indexes)
+
+        for i, index in enumerate(indexes, 1):
+            X_batch, y_batch, X_masks, y_masks, M = X_train[index], y_train[index], \
+                    X_train_masks[index], y_train_masks[index], Ms[index]
+
             dy.renew_cg()
             batch_loss, _ = seq2seq.one_batch(X_batch, y_batch, X_masks, y_masks, eos=eos)
             normalized_batch_loss = batch_loss / M      #normalize batch loss by timesteps
