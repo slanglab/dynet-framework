@@ -20,5 +20,5 @@ python $ROOT/main.py \
     --lr_decay 0.93 \
     --patience 3 \
     --monitor none \
-    --batch_size 64 \
+    --batch_size 16 \
     --val_batch_size 64

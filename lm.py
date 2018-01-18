@@ -54,7 +54,9 @@ class LSTMLanguageModel(LanguageModelBase):
 
         self.lstm.set_dropouts(self.input_dropout, self.recurrent_dropout)
         s0 = self.lstm.initial_state()
+
         states = s0.transduce(X)
+        states = [ dy.dropout(h_i, self.input_dropout) for h_i in states ]
 
         return states
 
@@ -62,7 +64,7 @@ class LSTMLanguageModel(LanguageModelBase):
         W_emb, softmax = self.get_params()
         X = [ dy.lookup_batch(W_emb, tok_batch) for tok_batch in X_batch ]
 
-        self.lstm.set_dropouts(0, 0)
+        self.lstm.disable_dropout()
         s0 = self.lstm.initial_state()
         states = s0.transduce(X)
 
