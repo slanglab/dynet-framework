@@ -52,7 +52,6 @@ def accuracy(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_vali
 def perplexity(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_valid_raw, \
         dy, lm, out_vocab, validate_samples=True, run='/runs/baseline', valid_fn='validation'):
     val_loss = 0.
-    l = 0.
 
     validation = open(os.path.join(run, valid_fn), 'wt')
     for X_batch, y_batch, X_masks, y_masks, X_batch_raw, y_batch_raw in \
@@ -62,15 +61,12 @@ def perplexity(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_va
                 X_batch, y_batch, X_masks, y_masks, training=False)
         val_loss += batch_loss.value()
 
-        neg_ln_prob = batch_loss.value()
-        l += neg_ln_prob
-
         #for x, y in zip(X_batch_raw, y_batch_raw):
         #    validation.write('%s\t%s\n' % \
         #            (' '.join(x), ' '.join(y)))
     M = sum([ sum([ sum(seq) for seq in batch ]) for batch in X_valid_masks ])
-    l = (1./M) * (l / np.log(2))
-    perplexity = np.power(2, l)
+    avg_tok_loss = val_loss / M
+    perplexity = np.exp(val_loss / M)
 
     #validate some samples from lm
     if validate_samples:
@@ -83,7 +79,9 @@ def perplexity(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_va
             validation.write('%s\n' % ' '.join(sample))
         validation.close()
 
-    metrics = [ ('Perplexity: %f.', perplexity) ]
+    metrics = [ ('Validation loss: %f.', val_loss), \
+            ('Average Token loss: %f.', avg_tok_loss), \
+            ('Perplexity: %f.', perplexity) ]
     return val_loss, -perplexity, metrics
 
 if __name__ == '__main__':

@@ -153,6 +153,7 @@ if __name__ == '__main__':
             dy.renew_cg()
             batch_loss, _ = seq2seq.one_batch(X_batch, y_batch, X_masks, y_masks, eos=eos)
             normalized_batch_loss = batch_loss / M      #normalize batch loss by timesteps
+            normalized_batch_loss = batch_loss
 
             normalized_batch_loss.backward()
             trainer.update()
@@ -182,8 +183,8 @@ if __name__ == '__main__':
                 X_valid, y_valid, X_valid_masks, y_valid_masks, \
                 X_valid_raw, y_valid_raw, dy, seq2seq, out_vocab, \
                 run=args.run, valid_fn=args.validation)
-        print('Done. ' + ' '.join([ i[0] for i in metrics ])  % \
-                metrics[0][1] if len(metrics) == 1 else [ i[1] for i in metrics ])
+        print('Done. ' + ' '.join([ i[0] for i in metrics ] % metrics[0][1] \
+                if len(metrics) == 1 else [ i[0] % i[1] for i in metrics ]))
 
         #checkpointing
         if accuracy > highest_val_accuracy:
