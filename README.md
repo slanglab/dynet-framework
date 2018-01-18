@@ -7,11 +7,11 @@ The framework is still largely a work in progress. I'd like to add more examples
 ## Training an LSTM Language Model
 
 To train an LSTM language model with the specified parameters in `lm.py`, first specify the framework directory and run the example script with:
-  export SEQ2SEQROOT=/directory/of/repository
-  bash runs/example/experiment.sh
-The memory specified in the example script is tuned for a Titan X. With a Titan X I was able to train at 158s per epoch, and after epoch 7 I had:
-  Epoch 7. Time elapsed: 158s, 42068/42068. Total Loss: 4693762.2395. Average sequence loss: 111.5756. Average Token Loss: 5.0493.
+  <br>`export SEQ2SEQROOT=/directory/of/repository
+  bash runs/example/experiment.sh`<br>
+The memory specified in the example script is tuned for a Titan X. With it, I was able to train at 158s per epoch, and after epoch 7 I had:
+  <br>`Epoch 7. Time elapsed: 158s, 42068/42068. Total Loss: 4693762.2395. Average sequence loss: 111.5756. Average Token Loss: 5.0493.
   Done. Total loss: 4693762.239487
   [lr=0.64699 clips=2630 updates=2630]
   Validating...
-  Done. Validation loss: 363955.496216. Average Token loss: 4.934321. Perplexity: 138.978705.
+  Done. Validation loss: 363955.496216. Average Token loss: 4.934321. Perplexity: 138.978705.`<br>
