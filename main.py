@@ -149,7 +149,7 @@ if __name__ == '__main__':
         start = time.time()
 
         #length sorted batches, train batches in random order
-        indexes = range(0, len(X_batch))
+        indexes = range(0, len(X_train))
         random.shuffle(indexes)
 
         for i, index in enumerate(indexes, 1):
