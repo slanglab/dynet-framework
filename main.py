@@ -145,7 +145,7 @@ if __name__ == '__main__':
     total_seqs = sum([ len(X_batch) for X_batch in X_train ])
     Ms = [ sum([ sum(seq) for seq in batch ]) for batch in X_train_masks ]
     for epoch in range(1, args.epochs+1):
-        seqs, loss = 0, 0.
+        seqs, toks, loss = 0, 0, 0.
         start = time.time()
 
         for i, (X_batch, y_batch, X_masks, y_masks, M) in \
@@ -159,11 +159,15 @@ if __name__ == '__main__':
 
             loss += batch_loss.value()
             seqs += len(X_batch)
+            toks += M
             avg_seq_loss = loss / seqs
+            avg_tok_loss = loss / toks
             elapsed = time.time() - start
 
-            print('Epoch %d. Time elapsed: %ds, %d/%d. Total Loss: %f. Average sequence loss: %f\r' % \
-                    (epoch, elapsed, seqs, total_seqs, loss, avg_seq_loss), end='')
+            print(('Epoch %d. Time elapsed: %ds, %d/%d. Total Loss: %.4f. ' + \
+                    'Average sequence loss: %.4f. Average Token Loss: %.4f.\r') % \
+                    (epoch, elapsed, seqs, total_seqs, loss, avg_seq_loss, avg_tok_loss), \
+                end='')
 
         print()
         print('Done. Total loss: %f' % loss)
