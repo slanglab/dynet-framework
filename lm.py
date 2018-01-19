@@ -29,8 +29,8 @@ class LanguageModelBase:
         return batch_loss, decoding
 
 class LSTMLanguageModel(LanguageModelBase):
-    def __init__(self, collection, vocab_size, out_vocab_size, input_embedding_dim=128, \
-            lstm_layers=2, lstm_hidden_dim=256, input_dropout=0.5, recurrent_dropout=0.):
+    def __init__(self, collection, vocab_size, out_vocab_size, input_embedding_dim=512, \
+            lstm_layers=3, lstm_hidden_dim=1024, input_dropout=0.5, recurrent_dropout=0.):
         self.collection = collection
         self.params = {}
 

@@ -14,10 +14,10 @@ python $ROOT/main.py \
     --gpus 1 \
     --imports lm \
     --checkpoint lm.model \
-    --epochs 300 \
+    --epochs 100 \
     --trainer sgd \
     --lr 1 \
-    --lr_decay 0.93 \
+    --lr_decay 0.85 \
     --patience 3 \
     --monitor none \
     --batch_size 16 \
