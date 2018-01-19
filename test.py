@@ -1,6 +1,12 @@
-import random
+from __future__ import print_function
+
 import os
-from subprocess import call
+import sys
+import time
+import random
+import argparse
+
+import _dynet as dy
 import numpy as np
 
 import utils
@@ -44,7 +50,8 @@ def accuracy(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_vali
     tok_accuracy = correct_toks/total_toks
     validation.close()
 
-    metrics = [ ('Token-level accuracy: %f.', tok_accuracy), \
+    metrics = [ ('Validation loss: %f.', val_loss), \
+            ('Token-level accuracy: %f.', tok_accuracy), \
             ('Sequence-level accuracy: %f.', seq_accuracy) ]
 
     return val_loss, seq_accuracy, metrics
@@ -61,9 +68,6 @@ def perplexity(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_va
                 X_batch, y_batch, X_masks, y_masks, training=False)
         val_loss += batch_loss.value()
 
-        #for x, y in zip(X_batch_raw, y_batch_raw):
-        #    validation.write('%s\t%s\n' % \
-        #            (' '.join(x), ' '.join(y)))
     M = sum([ sum([ sum(seq) for seq in batch ]) for batch in X_valid_masks ])
     avg_tok_loss = val_loss / M
     perplexity = np.exp(val_loss / M)
@@ -85,18 +89,26 @@ def perplexity(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_va
     return val_loss, -perplexity, metrics
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='General seq2seq framework (testing) for \
-            ptb parsing written in Dynet by Johnny Wei - jwei@umass.edu')
-    parser.add_argument('--test', type=str, default='data/wsj_23', 
+    parser = argparse.ArgumentParser(description='General seq2seq and language \
+            modelling framework (testing) for Dynet written by Johnny Wei - jwei@umass.edu')
+
+    parser.add_argument('--run', type=str, default='runs/experiment', 
+            help='Experiment directory.')
+    parser.add_argument('--model', type=str, default='Seq2SeqVanilla', 
+            help='Model to train.')
+    parser.add_argument('--test', type=str, default='data/wsj_24', 
             help='Test set.')
-    parser.add_argument('--validation', type=str, default='validation', 
-            help='Name of results.')
-    parser.add_argument('--populate', type=str, required=True,
-            help='Load a pretrained model.')
     parser.add_argument('--in_vocab', type=str, default='data/in_vocab', 
             help='Input vocabulary.')
     parser.add_argument('--out_vocab', type=str, default='data/out_vocab', 
             help='Ouput vocabulary.')
+
+    parser.add_argument('--format', type=str, default='parse',
+            help='Format of input data.')
+    parser.add_argument('--val_metric', type=str, default='evalb',
+            help='Metric to use for validation.')
+    parser.add_argument('--batch_size', type=int, default=128, 
+            help='Training batch size.')
 
     parser.add_argument('--mem', type=int, default=22528,
             help='Memory to allocate (default=22GB).')
@@ -111,13 +123,10 @@ if __name__ == '__main__':
             help='Seed for python random.')
     parser.add_argument('--imports', type=str, default='seq2seq',
             help='File to look for model classes in (import seq2seq).')
-    parser.add_argument('--cutoff', type=int, default=1048,
-            help='Cutoff N longest training examples (default for ptb).')
-    parser.add_argument('--batch_size', type=int, default=128, 
-            help='Testing batch size.')
+    parser.add_argument('--populate', type=str, required=True,
+            help='Load a pretrained model.')
     args = parser.parse_args()
 
-    import _dynet as dy
     random.seed(args.seed)
     dy_params = dy.DynetParams()
     dy_params.set_random_seed(args.dy_seed)
@@ -132,27 +141,39 @@ if __name__ == '__main__':
     print('Done.')
 
     print('Reading test data...')
-    VALID_BATCH_SIZE=32
-    X_valid, y_valid, X_valid_masks, y_valid_masks = \
-            utils.load(in_vocab, out_vocab, section=args.test, batch_size=args.batch_size)
-    X_valid_raw, y_valid_raw = utils.load_raw(section=args.test, batch_size=args.batch_size)
+    X_valid_raw, y_valid_raw = utils.load_raw( \
+            section=args.test, batch_size=args.batch_size,
+            imports=args.imports, format=args.format)
+    X_valid, y_valid, X_valid_masks, y_valid_masks = utils.load( \
+            in_vocab, out_vocab, section=args.test, batch_size=args.batch_size,
+            imports=args.imports, format=args.format)
     print('Done.')
+
+    print('Contains %d unique words.' % len(in_vocab))
+    print('Read in %d examples.' % len(X_train))
+
+    print('Input vocabulary sample...')
+    print(', '.join(in_vocab[:10]))
+    print('Output vocabulary sample...')
+    print(', '.join(out_vocab[:10]))
 
     print('Building model...')
     collection = dy.ParameterCollection()
-    seq2seq = Seq2SeqAttention(collection, len(in_vocab), len(out_vocab))
+    imports = __import__(args.imports)
+    Model = getattr(imports, args.model)
+    seq2seq = Model(collection, len(in_vocab), len(out_vocab))
     print('Done.')
-
-    checkpoint = args.populate
-    print('Loading model from %s.' % checkpoint)
 
     print('Loading model...')
     collection.populate(checkpoint)
     print('Done.')
-
+ 
     print('Testing...')
-    val_loss, accuracy, tok_accuracy = validate(X_valid, y_valid, X_valid_masks, y_valid_masks, \
-            X_valid_raw, y_valid_raw, dy, seq2seq, out_vocab, run=RUN, valid_fn='test')
-    print('Done. Sequence-level accuracy: %f. Token-level accuracy: %f' % (accuracy, tok_accuracy))
+    val_loss, accuracy, metrics = validate( \
+            X_valid, y_valid, X_valid_masks, y_valid_masks, \
+            X_valid_raw, y_valid_raw, dy, seq2seq, out_vocab, \
+            run=args.run, valid_fn=args.validation)
+    print('Done. ' + ' '.join([ i[0] for i in metrics ] % metrics[0][1] \
+            if len(metrics) == 1 else [ i[0] % i[1] for i in metrics ]))
 
-    #TODO generates reports from evalb automatically
+
