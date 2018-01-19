@@ -12,7 +12,7 @@ To train an LSTM language model with the specified hyperparameters in `lm.py`, f
     export SEQ2SEQROOT=/directory/of/repository
     bash runs/example/lm_ptb_train.py
 
-The hyperparmeters specify a very large language model (512 input dim, 1024 hidden dim, 3 layer LSTM)! I trained using a Titan X (12GB), and I tuned the memory accordingly in the example script. With it, I was able to train at 383s per epoch, and after epoch 31 I had:
+The hyperparmeters specify a very large language model (512 input dim, 1024 hidden dim, 3 layer LSTM)! I trained using a Titan X (12GB), and tuned the memory accordingly. With it, training was possible at 383s per epoch, and after epoch 31 the validation shows:
 
     Epoch 31. Time elapsed: 383s, 42068/42068. Total Loss: 3759063.9351. Average sequence loss: 89.3568. Average Token Loss: 4.0438.
     Done. Total loss: 3759063.935143
@@ -31,4 +31,4 @@ I was able to achieve these results on the test set:
     Testing...
     Done. Validation loss: 375382.022034. Average Token loss: 4.553949. Perplexity: 95.006857.
 
-For reference [Zaremba et al., 2014](https://arxiv.org/abs/1409.2329) achieves 82.2 perplexity on validation, and 78.4 on test with a 2 layer, 1500 hidden dim LSTM. I will need to investigate this difference in performance.
+For reference, [Zaremba et al., 2014](https://arxiv.org/abs/1409.2329) achieves 82.2 perplexity on validation, and 78.4 on test with a 2 layer, 1500 hidden dim LSTM. This difference in performance needs to be investigated.
