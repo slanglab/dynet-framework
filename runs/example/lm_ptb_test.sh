@@ -1,0 +1,13 @@
+python $SEQ2SEQROOT/test.py \
+    --run runs/example/ \
+    --model LSTMLanguageModel \
+    --populate lm.model \
+    --test data/lm/test \
+    --in_vocab data/lm/vocab \
+    --out_vocab data/lm/vocab \
+    --format lm \
+    --val_metric perplexity \
+    --mem 11264 \
+    --gpus 1 \
+    --imports lm \
+    --batch_size 64
