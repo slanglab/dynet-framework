@@ -1,6 +1,4 @@
-ROOT=/home/jwei/seq2seq-parse
-
-python $ROOT/main.py \
+python $SEQ2SEQROOT/main.py \
     --run runs/example/ \
     --model LSTMLanguageModel \
     --train data/lm/train \
