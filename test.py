@@ -102,6 +102,8 @@ if __name__ == '__main__':
             help='Input vocabulary.')
     parser.add_argument('--out_vocab', type=str, default='data/out_vocab', 
             help='Ouput vocabulary.')
+    parser.add_argument('--validation', type=str, default='results', 
+            help='Name of test results.')
 
     parser.add_argument('--format', type=str, default='parse',
             help='Format of input data.')
@@ -150,7 +152,7 @@ if __name__ == '__main__':
     print('Done.')
 
     print('Contains %d unique words.' % len(in_vocab))
-    print('Read in %d examples.' % len(X_train))
+    print('Read in %d batches.' % len(X_valid))
 
     print('Input vocabulary sample...')
     print(', '.join(in_vocab[:10]))
@@ -165,8 +167,11 @@ if __name__ == '__main__':
     print('Done.')
 
     print('Loading model...')
-    collection.populate(checkpoint)
+    collection.populate(os.path.join(args.run, args.populate))
     print('Done.')
+
+    print('Testing model on metric (%s).' % args.val_metric)
+    validate = get_val_metric(args.val_metric, args.imports)
  
     print('Testing...')
     val_loss, accuracy, metrics = validate( \
