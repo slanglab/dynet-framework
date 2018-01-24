@@ -3,7 +3,7 @@ import re
 
 def process(raw):
     raw = raw[2:-2]                             #strip outer parenthesis
-    raw = re.sub(r'\S+\)', '<TOK>)', raw)       #normalize words
+    raw = re.sub(r'^[\s\)]+\)', '<TOK>)', raw)       #normalize words
     raw = raw.replace(')', ' )')                #tokenize with space
     raw = raw.replace('@', '')                  #normalize binarized nodes
     
@@ -48,4 +48,4 @@ for fn in fns:
 
 #write vocabulary file
 out_vocab = open(os.path.join(seq2seqroot, 'data/parse/out_vocab'), 'wt')
-[ out_vocab.write('%s\n' % tok) for tok in toks ]
+[ out_vocab.write('%s\n' % tok) for tok in toks if not tok == '' ]
