@@ -1,0 +1,22 @@
+python $SEQ2SEQROOT/main.py \
+    --run runs/example/seq2seq/ \
+    --model Seq2SeqVanilla \
+    --train data/parse/train.seqs \
+    --dev data/parse/valid.seqs \
+    --in_vocab data/lm/vocab \
+    --out_vocab data/parse/out_vocab \
+    --format seq2seq \
+    --val_metric accuracy \
+    --cutoff 0 \
+    --mem 512 \
+    --gpus 1 \
+    --imports seq2seq \
+    --checkpoint seq2seq.model \
+    --epochs 100 \
+    --trainer sgd \
+    --lr 1 \
+    --lr_decay 0.85 \
+    --patience 3 \
+    --monitor none \
+    --batch_size 16 \
+    --val_batch_size 64
