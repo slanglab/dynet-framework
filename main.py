@@ -158,8 +158,7 @@ if __name__ == '__main__':
 
             dy.renew_cg()
             batch_loss, _ = seq2seq.one_batch(X_batch, y_batch, X_masks, y_masks, eos=eos)
-            normalized_batch_loss = batch_loss / M      #normalize batch loss by timesteps
-            normalized_batch_loss = batch_loss
+            normalized_batch_loss = batch_loss / len(X_batch)
 
             normalized_batch_loss.backward()
             trainer.update()
