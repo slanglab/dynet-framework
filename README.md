@@ -7,7 +7,7 @@ The framework is still largely a work in progress. I'd like to add more examples
 
 ## Training an LSTM Language Model
 
-To train an LSTM language model with the specified hyperparameters in `lm.py`, first specify the framework directory and run the example script with:
+To train an LSTM language model on the Mikolov data with the specified hyperparameters in `lm.py`, first specify the framework directory and run the example script with:
 
     export SEQ2SEQROOT=/directory/of/repository
     bash runs/example/lm_ptb_train.py
@@ -43,4 +43,14 @@ In this example, we will use the silver parse trees in `data/parse/` generated f
 To train a seq2seq parser with the specified hyperparameters in `seq2seq.py`, run:
 
     bash runs/example/seq2seq_ptb_train.sh
+    
+The hyperparmeters specify a very large seq2seq model (512 input dim, 512 hidden dim, 2 layer encoder/decoder)! I trained using a Titan X (12GB), and tuned the memory accordingly. With it, training was possible at 349s per epoch, and after epoch 45 the validation shows:
 
+    Epoch 45. Time elapsed: 349s, 41556/41556. Total Loss: 496500.1872. Average sequence loss: 11.9477. Average Token Loss: 0.5266.
+    Done. Total loss: 496500.187222
+    [lr=0.0732718 clips=1072 updates=1299]
+    Validating...
+    Done. Validation loss: 5964783.725300. Token-level accuracy: 0.320665. Sequence-level accuracy: 0.105638.
+    Monitored quantity improved.
+
+The results of the validation should be written to `runs/examples/seq2seq/validation`. To evaluate, you should postprocess the sequences and evaluate using EVALB (work in progress).
