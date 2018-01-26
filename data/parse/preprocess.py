@@ -3,7 +3,7 @@ import re
 
 def process(raw):
     raw = raw[2:-2]                             #strip outer parenthesis
-    raw = re.sub(r'^[\s\)]+\)', '<TOK>)', raw)       #normalize words
+    raw = re.sub(r'[^\s\)]+\)', '<TOK>)', raw)       #normalize words
     raw = raw.replace(')', ' )')                #tokenize with space
     raw = raw.replace('@', '')                  #normalize binarized nodes
     
