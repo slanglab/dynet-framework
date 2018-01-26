@@ -48,4 +48,4 @@ for fn in fns:
 
 #write vocabulary file
 out_vocab = open(os.path.join(seq2seqroot, 'data/parse/out_vocab'), 'wt')
-[ out_vocab.write('%s\n' % tok) for tok in toks if not tok == '' ]
+[ out_vocab.write('%s\n' % tok) for tok in toks ]
