@@ -32,3 +32,15 @@ I was able to achieve these results on the test set:
     Done. Validation loss: 375382.022034. Average Token loss: 4.553949. Perplexity: 95.006857.
 
 For reference, [Zaremba et al., 2014](https://arxiv.org/abs/1409.2329) achieves 82.2 perplexity on validation, and 78.4 on test with a 2 layer, 1500 hidden dim LSTM. This difference in performance needs to be investigated.
+
+## Training a Seq2seq Parser
+
+In this example, we will use the silver parse trees in `data/parse/` generated from the BerkeleyParser on the Mikolov language modeling data as our dataset (more on this in `data/parse/README.md`). First specify the framework directory and run the preprocessing script:
+
+    export SEQ2SEQROOT=/directory/of/repository
+    python data/parse/preprocess.py
+    
+To train a seq2seq parser with the specified hyperparameters in `seq2seq.py`, run:
+
+    bash runs/example/seq2seq_ptb_train.sh
+
