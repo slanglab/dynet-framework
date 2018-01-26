@@ -34,9 +34,9 @@ class Seq2SeqBase:
         return batch_loss, decoding
 
 class Seq2SeqVanilla(Seq2SeqBase):
-    def __init__(self, collection, vocab_size, out_vocab_size, input_embedding_dim=256, output_embedding_dim=128, \
-            encoder_layers=3, decoder_layers=3, encoder_hidden_dim=256, decoder_hidden_dim=256, \
-            encoder_dropout=0.3, decoder_dropout=0.3):
+    def __init__(self, collection, vocab_size, out_vocab_size, input_embedding_dim=512, output_embedding_dim=32, \
+            encoder_layers=2, decoder_layers=2, encoder_hidden_dim=512, decoder_hidden_dim=512, \
+            encoder_dropout=0.5, decoder_dropout=0.5):
         self.collection = collection
         self.params = {}
 
@@ -125,9 +125,9 @@ class Seq2SeqVanilla(Seq2SeqBase):
         return decoding
 
 class Seq2SeqAttention(Seq2SeqBase):
-    def __init__(self, collection, vocab_size, out_vocab_size, input_embedding_dim=256, output_embedding_dim=128, \
-            encoder_layers=3, decoder_layers=3, encoder_hidden_dim=256, decoder_hidden_dim=256, \
-            encoder_dropout=0.3, decoder_dropout=0.3, attention_dropout=0.3):
+    def __init__(self, collection, vocab_size, out_vocab_size, input_embedding_dim=512, output_embedding_dim=32, \
+            encoder_layers=2, decoder_layers=2, encoder_hidden_dim=512, decoder_hidden_dim=512, \
+            encoder_dropout=0.5, decoder_dropout=0.5, attention_dropout=0.5):
         self.collection = collection
         self.params = {}
 
