@@ -63,19 +63,17 @@ class Seq2SeqVanilla(Seq2SeqBase):
     def encode(self, W_emb, X_batch, X_masks):
         Xs = [ dy.lookup_batch(W_emb, tok_batch) for tok_batch in X_batch ]
 
-        s0 = self.encoder.initial_state()
-        state = s0
-
         h_t = None
+        state = self.encoder.initial_state()
         for X, mask in zip(Xs, X_masks):
-           curr = state.add_input(X)
-           h_i = curr.s()
+           state = state.add_input(X)
+           h_i = state.s()
 
            mask_expr = dy.inputVector(mask)
            mask = dy.reshape(mask_expr, (1,), len(mask))
 
            if h_t != None:
-               h_t = [ h * mask + h * (1. - mask) for h in h_t ]
+               h_t = [ c * mask + h * (1. - mask) for c, h in zip(h_i, h_t) ]
            else:
                h_t = h_i
 
