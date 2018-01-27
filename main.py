@@ -126,7 +126,7 @@ if __name__ == '__main__':
     seq2seq = Model(collection, len(in_vocab), len(out_vocab))
     print('Done.')
 
-    log = open(os.path.join(args.run, args.log), 'wt')
+    log = open(os.path.join(args.run, args.log), 'wta')
     print('Training logs will be written to %s.' % os.path.join(args.run, args.log))
 
     checkpoint = os.path.join(args.run, args.checkpoint)
@@ -197,6 +197,13 @@ if __name__ == '__main__':
         print('Done. ' + ' '.join([ i[0] for i in metrics ] % metrics[0][1] \
                 if len(metrics) == 1 else [ i[0] % i[1] for i in metrics ]))
 
+        print('Logging training status...')
+        log_quantities = [ epoch, trainer.learning_rate, loss ]
+        log_quantities.extend(i[1] for i in metrics)
+        log_quantities = [ str(q) for q in log_quantities ]
+        log.write('%s\n' % '\t'.join(log_quantities))
+        log.flush()
+
         #checkpointing
         if accuracy > highest_val_accuracy:
             print('Highest accuracy yet. Saving model...')
@@ -227,12 +234,6 @@ if __name__ == '__main__':
                 print('Patience at %d' % patience)
                 patience += 1
         monitor = quantity
-
-        print('Logging training status...')
-        log_quantities = [ epoch, trainer.learning_rate ]
-        log_quantities.extend(i[1] for i in metrics)
-        log.write('%s\n' % '\t'.join(log_quantities))
-        log.flush()
 
         print('Done.')
     print('Done.')
