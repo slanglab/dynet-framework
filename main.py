@@ -103,7 +103,7 @@ if __name__ == '__main__':
     print('Done.')
 
     print('Contains %d unique words.' % len(in_vocab))
-    print('Read in %d examples.' % len(X_train))
+    print('Read in %d batches containing %d examples.' % (len(X_train), sum(len(X_batch) for X_batch in X_train)))
 
     print('Input vocabulary sample...')
     print(', '.join(in_vocab[:10]))
