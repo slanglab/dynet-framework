@@ -61,22 +61,23 @@ class Seq2SeqVanilla(Seq2SeqBase):
         return W_emb, Wout_emb, R, b
 
     def encode(self, W_emb, X_batch, X_masks):
-        X = [ dy.lookup_batch(W_emb, tok_batch) for tok_batch in X_batch ]
+        Xs = [ dy.lookup_batch(W_emb, tok_batch) for tok_batch in X_batch ]
 
-        s0 = self.encoder.initial_state()
-        states = s0.add_inputs(X)
+        h_t = None
+        state = self.encoder.initial_state()
+        for X, mask in zip(Xs, X_masks):
+           state = state.add_input(X)
+           h_i = state.s()
 
-        encoding = [ state.h()[-1] for state in states ]
+           mask_expr = dy.inputVector(mask)
+           mask = dy.reshape(mask_expr, (1,), len(mask))
 
-        final = states[-1].s()
+           if h_t != None:
+               h_t = [ c * mask + h * (1. - mask) for c, h in zip(h_i, h_t) ]
+           else:
+               h_t = h_i
 
-        for i, mask in enumerate(X_masks):
-            mask_expr = dy.inputVector(mask)
-            mask = dy.reshape(mask_expr, (1,), len(mask))
-            encoding[i] = encoding[i] * mask
-        encoding = dy.concatenate_cols(encoding)
-
-        return encoding, final
+        return h_t
 
     def backward_batch(self, X_batch, y_batch, X_masks, eos):
         W_emb, Wout_emb, R, b = self.get_params()
@@ -84,7 +85,7 @@ class Seq2SeqVanilla(Seq2SeqBase):
         self.encoder.set_dropouts(self.encoder_dropout, 0)
         self.decoder.set_dropouts(self.decoder_dropout, 0)
 
-        encoding, final = self.encode(W_emb, X_batch, X_masks)
+        final = self.encode(W_emb, X_batch, X_masks)
         s0 = self.decoder.initial_state(vecs=final)
 
         #teacher forcing
@@ -102,7 +103,7 @@ class Seq2SeqVanilla(Seq2SeqBase):
         self.encoder.set_dropouts(0, 0)
         self.decoder.set_dropouts(0, 0)
 
-        encoding, final = self.encode(W_emb, X_batch, X_masks)
+        final = self.encode(W_emb, X_batch, X_masks)
         s0 = self.decoder.initial_state(vecs=final)
 
         #eos to start the sequence
