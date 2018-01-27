@@ -21,21 +21,23 @@ if __name__ == '__main__':
             help='Model to train.')
     parser.add_argument('--train', type=str, default='data/wsj_2-21', 
             help='Training set.')
+    parser.add_argument('--cutoff', type=int, default=1048,
+            help='Cutoff N longest training examples (default for ptb).')
     parser.add_argument('--dev', type=str, default='data/wsj_24', 
             help='Validation set.')
-    parser.add_argument('--validation', type=str, default='validation', 
-            help='Name of validation results.')
+    parser.add_argument('--format', type=str, default='parse',
+            help='Format of input data.')
     parser.add_argument('--in_vocab', type=str, default='data/in_vocab', 
             help='Input vocabulary.')
     parser.add_argument('--out_vocab', type=str, default='data/out_vocab', 
             help='Ouput vocabulary.')
 
-    parser.add_argument('--format', type=str, default='parse',
-            help='Format of input data.')
+    parser.add_argument('--validation', type=str, default='validation', 
+            help='Name of validation results.')
     parser.add_argument('--val_metric', type=str, default='evalb',
             help='Metric to use for validation.')
-    parser.add_argument('--cutoff', type=int, default=1048,
-            help='Cutoff N longest training examples (default for ptb).')
+    parser.add_argument('--log', type=str, default='log',
+            help='Metric to use for validation.')
     parser.add_argument('--batch_size', type=int, default=128, 
             help='Training batch size.')
     parser.add_argument('--val_batch_size', type=int, default=32, 
@@ -49,9 +51,9 @@ if __name__ == '__main__':
             help='GPUs to allocate to dynet.')
     parser.add_argument('--autobatch', type=bool, default=False,
             help='Autobatching for dynet')
-
     parser.add_argument('--seed', type=int, default=0,
             help='Seed for python random.')
+
     parser.add_argument('--imports', type=str, default='seq2seq',
             help='File to look for model classes in (import seq2seq).')
     parser.add_argument('--populate', type=str,
@@ -124,6 +126,9 @@ if __name__ == '__main__':
     seq2seq = Model(collection, len(in_vocab), len(out_vocab))
     print('Done.')
 
+    log = open(os.path.join(args.run, args.log), 'wt')
+    print('Training logs will be written to %s.' % os.path.join(args.run, args.log))
+
     checkpoint = os.path.join(args.run, args.checkpoint)
     print('Checkpoints will be written to %s.' % checkpoint)
 
@@ -144,6 +149,7 @@ if __name__ == '__main__':
     patience = 1
     total_seqs = sum([ len(X_batch) for X_batch in X_train ])
     Ms = [ sum([ sum(seq) for seq in batch ]) for batch in X_train_masks ]
+
     for epoch in range(1, args.epochs+1):
         seqs, toks, loss = 0, 0, 0.
         start = time.time()
@@ -222,8 +228,11 @@ if __name__ == '__main__':
                 patience += 1
         monitor = quantity
 
-        #TODO log training losses and validations losses
-        #should also consider implementing validating with f1
+        print('Logging training status...')
+        log_quantities = [ epoch, trainer.learning_rate ]
+        log_quantities.extend(i[1] for i in metrics)
+        log.write('%s\n' % '\t'.join(log_quantities))
+        log.flush()
 
         print('Done.')
     print('Done.')
