@@ -151,7 +151,7 @@ if __name__ == '__main__':
     Ms = [ sum([ sum(seq) for seq in batch ]) for batch in X_train_masks ]
 
     for epoch in range(1, args.epochs+1):
-        seqs, toks, loss = 0, 0, 0.
+        seqs, toks, loss, total_kl = 0, 0, 0., 0.
         start = time.time()
 
         #length sorted batches, train batches in random order
@@ -163,22 +163,23 @@ if __name__ == '__main__':
                     X_train_masks[index], y_train_masks[index], Ms[index]
 
             dy.renew_cg()
-            batch_loss, _ = seq2seq.one_batch(X_batch, y_batch, X_masks, y_masks, eos=eos)
-            normalized_batch_loss = batch_loss / len(X_batch)
+            batch_loss, kl_loss, _ = seq2seq.one_batch(X_batch, y_batch, X_masks, y_masks, eos=eos)
+            normalized_batch_loss = (batch_loss + kl_loss) / len(X_batch)
 
             normalized_batch_loss.backward()
             trainer.update()
 
             loss += batch_loss.value()
+            total_kl += kl_loss.value()
             seqs += len(X_batch)
             toks += M
-            avg_seq_loss = loss / seqs
+            avg_kl_divergence = total_kl / toks
             avg_tok_loss = loss / toks
             elapsed = time.time() - start
 
             print(('Epoch %d. Time elapsed: %ds, %d/%d. Total Loss: %.4f. ' + \
-                    'Average sequence loss: %.4f. Average Token Loss: %.4f.\r') % \
-                    (epoch, elapsed, seqs, total_seqs, loss, avg_seq_loss, avg_tok_loss), \
+                    'KL Loss: %.4f. Average Token Loss: %.4f.\r') % \
+                    (epoch, elapsed, seqs, total_seqs, loss, avg_kl_divergence, avg_tok_loss), \
                 end='')
 
         print()

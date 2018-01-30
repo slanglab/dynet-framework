@@ -57,14 +57,14 @@ def accuracy(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_vali
     return val_loss, seq_accuracy, metrics
 
 def perplexity(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_valid_raw, \
-        dy, lm, out_vocab, validate_samples=True, run='/runs/baseline', valid_fn='validation'):
+        dy, lm, out_vocab, validate_samples=False, run='/runs/baseline', valid_fn='validation'):
     val_loss = 0.
 
     validation = open(os.path.join(run, valid_fn), 'wt')
     for X_batch, y_batch, X_masks, y_masks, X_batch_raw, y_batch_raw in \
             zip(X_valid, y_valid, X_valid_masks, y_valid_masks, X_valid_raw, y_valid_raw):
         dy.renew_cg()
-        batch_loss, decoding = lm.one_batch( \
+        batch_loss, kl_loss, decoding = lm.one_batch( \
                 X_batch, y_batch, X_masks, y_masks, training=False)
         val_loss += batch_loss.value()
 
